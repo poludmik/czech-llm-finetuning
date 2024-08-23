@@ -2,7 +2,7 @@ import argparse
 import random
 import wandb
 from peft import LoraConfig, get_peft_model
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer
 
 from utils import *
@@ -15,11 +15,11 @@ def main(config_path: str = "config.yaml"):
     random.seed(seed)
     model_name = "google/gemma-2-2b-it"
 
-    model = AutoModelForCausalLM.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name, attn_implementation='eager')
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     # tokenizer.padding_side = "left"
 
-    datasets = load_dataset(cfg.dataset)
+    datasets = load_from_disk(cfg.dataset)
 
     def tokenize_function(examples):
         texts = list(map(lambda x,y: x + y, examples["input"], examples["output"]))
@@ -48,17 +48,23 @@ def main(config_path: str = "config.yaml"):
 
     model.enable_input_require_grads()
 
-    model = get_peft_model(model, lora_config)
+    # model = get_peft_model(model, lora_config)
+
+    model = activate_adapter(model, "training/lora/instruction_gemma2-2b-it")
+
     model.print_trainable_parameters()
 
+    run_name = cfg.hyperparameters.run_name + ": " + get_readable_datetime_string()
+    
     wandb.init(entity=cfg.wandb.entity,
                project=cfg.wandb.project,
                config=dict(cfg),
                job_type="training",
-               name=cfg.hyperparameters.run_name + ": " + get_readable_datetime_string(),
-               )
+               name=run_name
+            )
 
     training_args = TrainingArguments(
+        run_name=run_name,
         output_dir=cfg.hyperparameters.output_dir,  # The output directory
         overwrite_output_dir=cfg.hyperparameters.overwrite_output_dir,  # overwrite the content of the output directory
         evaluation_strategy=cfg.hyperparameters.evaluation_strategy,
@@ -74,11 +80,11 @@ def main(config_path: str = "config.yaml"):
         warmup_ratio=cfg.hyperparameters.warmup_ratio,  # number of warmup steps for learning rate scheduler
         # lr_scheduler_kwargs={"min_lr_ratio": cfg.hyperparameters.min_lr_ratio},
         weight_decay = cfg.hyperparameters.weight_decay,
-        # fp16=cfg.hyperparameters.fp16,
+        fp16=cfg.hyperparameters.fp16,
         lr_scheduler_type = cfg.hyperparameters.lr_scheduler_type,
         report_to="wandb",
         gradient_checkpointing=cfg.hyperparameters.gradient_checkpointing,
-        neftune_noise_alpha=cfg.hyperparameters.neftune_noise_alpha,
+        # neftune_noise_alpha=cfg.hyperparameters.neftune_noise_alpha,
         )
 
     trainer = Trainer(model=model, args=training_args, 
@@ -92,5 +98,5 @@ def main(config_path: str = "config.yaml"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default="training/config/instruction_gemma2_config.yaml", help="Path to the config file.")
+    parser.add_argument("--config", type=str, default="czech-llm-finetuning/config/instruction_gemma2_config.yaml", help="Path to the config file.")
     main(parser.parse_args().config)
