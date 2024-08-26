@@ -27,10 +27,10 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 peft_model = model
 peft_model.eval()
 
-# input_prompt = "Ahoj, prosím, napiš kratký odstavec o tom, jak se cítí kočky. Jsou šťastné nebo spíše smutné?"
+input_prompt = "Ahoj, prosím, napiš kratký odstavec o tom, jak se cítí kočky. Jsou šťastné nebo spíše smutné?"
 # input_prompt = "Jaké město je větší: New York nebo Praha nebo Yekaterinburg? Kolik lidí tam žije?"
 # input_prompt = "Jaké slovo chybí? 'Moje kočka je velmi ________ se mnou.' Napiš jen pisméno odpovědí a-d. \na). šťastná\nb). sťastný\nc). štastné\nd). šťastnou"
-input_prompt = "0.002 = 1000\n1 = x?"
+# input_prompt = "0.002 = 1000\n1 = x?"
 # input_prompt = """Zde je příklad otázky a odpovědi z testu:
 # Otázka:
 # Vysokotlaké systémy zabraňují vzduchu stoupat do chladnějších oblastí atmosféry, kde může kondenzovat voda. Jaký bude nejpravděpodobnější výsledek, pokud se systém vysokého tlaku udrží v oblasti po dlouhou dobu?
