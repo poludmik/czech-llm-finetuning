@@ -48,9 +48,9 @@ def main(config_path: str = "config.yaml"):
 
     model.enable_input_require_grads()
 
-    # model = get_peft_model(model, lora_config)
+    model = get_peft_model(model, lora_config)
 
-    model = activate_adapter(model, "training/lora/instruction_gemma2-2b-it")
+    # model = activate_adapter(model, "training/lora/instruction_gemma2-2b-it")
 
     model.print_trainable_parameters()
 
@@ -98,5 +98,5 @@ def main(config_path: str = "config.yaml"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default="czech-llm-finetuning/config/instruction_gemma2_config.yaml", help="Path to the config file.")
+    parser.add_argument("--config", type=str, default="czech-llm-finetuning/config/normal_gemma2_config.yaml", help="Path to the config file.")
     main(parser.parse_args().config)

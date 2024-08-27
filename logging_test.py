@@ -1,3 +1,5 @@
+import json
+import time
 from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer
 
 from transformers.integrations import WandbCallback
@@ -8,6 +10,7 @@ from langchain_core.callbacks import CallbackManagerForLLMRun
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, SystemMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
+from langchain_core.output_parsers.string import StrOutputParser
 from langchain_core.callbacks.manager import CallbackManagerForLLMRun
 from transformers import pipeline, QuantoConfig, AutoTokenizer, AutoModelForCausalLM
 import torch
@@ -18,9 +21,10 @@ import random
 import wandb
 from peft import LoraConfig, get_peft_model
 from datasets import load_dataset, load_from_disk
+from tqdm import tqdm
 
 from utils import *
-
+from agree.prompts import *
 
 
 class CustomChatGemma2(BaseChatModel):
@@ -28,7 +32,7 @@ class CustomChatGemma2(BaseChatModel):
     dosample: bool = False
 
     def __init__(self, model, tokenizer, do_sample=False, 
-                 max_new_tokens=512, precision="fp16", device_map="auto", **kwargs):
+                 max_new_tokens=5, precision="fp16", device_map="auto", **kwargs):
         super().__init__()
 
         model=AutoModelForCausalLM.from_pretrained(
@@ -74,7 +78,7 @@ class CustomChatGemma2(BaseChatModel):
             self.pipeline.tokenizer.convert_tokens_to_ids("<end_of_turn>")
         ]
 
-        print("\n----")
+        # print("\n----")
 
         outputs = self.pipeline(
             prompt,
@@ -83,7 +87,7 @@ class CustomChatGemma2(BaseChatModel):
         )
         
         result = outputs[0]["generated_text"][len(prompt):]
-        print(result)
+        # print(result)
 
         message = AIMessage(content=result)
         generation = ChatGeneration(message=message)
@@ -128,7 +132,64 @@ class WandbPredictionProgressCallback(WandbCallback):
             sys_message = SystemMessage(content="Jsi assistent.", type="system")
             message = BaseMessage(content="Ahoj, jak se máš?", type="text")
 
-            llm.invoke([sys_message, message])
+            print(llm.invoke([sys_message, message]).content)
+
+            testing_dataset = json.load(open("czech-bench/benchmarks/agree/data/test.json", "r"))
+
+            prompt = PROMPT_SELECTOR.get_prompt(llm)
+            str_parser = StrOutputParser()
+
+            correct = 0
+            parse_fails = 0
+            count = 0
+            cum_time = 0.
+
+            print(f"{BLUE}Evaluating AGREE\n{RESET}")
+
+            for i, example in tqdm(enumerate(testing_dataset)):
+                # if i+1 > 10:
+                #     break
+                # print(f"\rExample {i+1} / {len(testing_dataset)}", end="")
+                sentence = example["sentence"]
+                choices = example["choices"]
+                gt = example["answer_idx"] + 1
+
+                try:
+                    start_time = time.time()
+                    if is_chat_model(llm):
+                        result = llm.invoke(prompt.format_prompt(sentence=sentence, choices=choices).to_messages())
+                    else:
+                        result = llm.invoke(prompt.format_prompt(sentence=sentence, choices=choices).text)    
+                    result = str_parser.invoke(result)
+                    end_time = time.time()
+                    res_split = result.split()
+                    if res_split:
+                        res = result.split()[0].strip().strip(")")
+                    else:
+                        res = result
+                except Exception as e:
+                    print(f"\nExample skipped due to an LLM Error: {e}")
+                    continue
+                
+                try:
+                    prediction = int(res)
+                except:
+                    parse_fails += 1
+                    continue
+                if prediction == gt:
+                    correct += 1
+                count += 1
+                cum_time += end_time - start_time
+
+            print("\nComputing metrics")
+
+            accuracy = correct/count*100
+            total_valid_examples = count
+            print(f"Accuracy: {accuracy:.2f}")
+            print(f"Unpareable answersz: {parse_fails}")
+            print("Total valid examples used: ", total_valid_examples)
+
+            self._wandb.log({"agree_accuracy": accuracy, "parse_fails": parse_fails})
 
             # input_ids = tokenizer.apply_chat_template(messages,
             #                                           return_tensors="pt", 

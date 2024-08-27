@@ -4,21 +4,21 @@ wandb:
 dataset: "dataset-playground/small_datasets/requests_translated_0_to_10k_google_gemma-2-2b-it/"
 hyperparameters:
   seed: 228
-  split_ratio: 0.001 # % of the data is used for validation
-  output_dir: "training/lora/cp/logging_tests"
+  split_ratio: 0.01 # % of the data is used for validation
+  output_dir: "training/lora/cp/instruction_gemma2-2b-it_lessLR_more_Neft"
   overwrite_output_dir: True
   per_device_train_batch_size: 1
   per_device_eval_batch_size: 1
   gradient_accumulation_steps: 8
   eval_accumulation_steps: 1
-  eval_steps: 20
+  eval_steps: 100
   optim: "paged_adamw_32bit"
-  save_steps: 20
+  save_steps: 500
   logging_steps: 50
   # group_by_length: True
   ddp_find_unused_parameters: False
-  run_name: "Testing logging"
-  learning_rate: 0.0025
+  run_name: "Modified_hyperparameters"
+  learning_rate: 0.000005
   max_grad_norm: 5.0
   max_steps: 16000
   warmup_ratio: 0.05
@@ -28,13 +28,13 @@ hyperparameters:
   lr_scheduler_type: "cosine"
   # min_lr_ratio: 0.3 # last_lr = min_lr_ratio * learning_rate
   gradient_checkpointing: True # saves memory, but disables using cache (cache uses more memory)
-  neftune_noise_alpha: 0.1
+  neftune_noise_alpha: 5.0
   trainer:
     # max_seq_length: 3000 # isn't used
-  lora_config: 
+  lora_config:
     r: 64
     alpha: 32
     dropout: 0.05
-    target_modules: ["gate_proj", "q_proj", "v_proj", "k_proj", "o_proj", 'down_proj', 'up_proj'] # no "embed_tokens"
+    target_modules: ['q_proj','k_proj','v_proj','o_proj','gate_proj','down_proj','up_proj','lm_head'] # no "embed_tokens"
     bias: "none"
     task_type: "CAUSAL_LM"
