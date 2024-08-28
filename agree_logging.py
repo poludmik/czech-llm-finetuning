@@ -191,18 +191,6 @@ class WandbPredictionProgressCallback(WandbCallback):
 
             self._wandb.log({"agree_accuracy": accuracy, "parse_fails": parse_fails})
 
-            # input_ids = tokenizer.apply_chat_template(messages,
-            #                                           return_tensors="pt", 
-            #                                           return_dict=True,
-            #                                           add_generation_prompt=True).to("cuda")
-
-            # outputs = self.trainer.model.generate(**input_ids, max_new_tokens=200)
-            # print("+++++++++++")
-            # print(tokenizer.decode(outputs[0]))
-            # print("+++++++++++")
-            # self._wandb.log({"generated_text": tokenizer.decode(outputs[0])})
-
-            # self._wandb.log({"testing_metric_1": 0.5, "testing_metric_2": 0.9 + random.random() * 0.1})
 
 
 def decode_predictions(tokenizer, predictions):
