@@ -1,11 +1,13 @@
 wandb:
   entity: "poludmik"
   project: "czech-llm"
-dataset: "dataset-playground/small_datasets/requests_translated_0_to_10k_google_gemma-2-2b-it/"
+# dataset: "dataset-playground/small_datasets/requests_translated_0_to_10k_google_gemma-2-2b-it/
+# dataset: "dataset-playground/small_datasets/arc_challenge/arc_challenge_gemma/"
+dataset: "dataset-playground/small_datasets/sqad_formatted/"
 hyperparameters:
   seed: 228
   split_ratio: 0.01 # % of the data is used for validation
-  output_dir: "training/lora/cp/instruction_gemma2-2b-it_lessLR_more_Neft"
+  output_dir: "training/lora/cp/sqad_gemma"
   overwrite_output_dir: True
   per_device_train_batch_size: 1
   per_device_eval_batch_size: 1
@@ -13,27 +15,27 @@ hyperparameters:
   eval_accumulation_steps: 1
   eval_steps: 100
   optim: "paged_adamw_32bit"
-  save_steps: 500
+  save_steps: 100
   logging_steps: 50
   # group_by_length: True
   ddp_find_unused_parameters: False
-  run_name: "Modified_hyperparameters"
-  learning_rate: 0.000005
+  run_name: "SQAD Gemma"
+  learning_rate: 0.00005
   max_grad_norm: 5.0
-  max_steps: 16000
+  max_steps: 1200
   warmup_ratio: 0.05
   weight_decay: 0.05
   fp16: True
   evaluation_strategy: "steps"
-  lr_scheduler_type: "cosine"
+  lr_scheduler_type: "constant_with_warmup"
   # min_lr_ratio: 0.3 # last_lr = min_lr_ratio * learning_rate
   gradient_checkpointing: True # saves memory, but disables using cache (cache uses more memory)
   neftune_noise_alpha: 5.0
   trainer:
     # max_seq_length: 3000 # isn't used
   lora_config:
-    r: 64
-    alpha: 32
+    r: 512
+    alpha: 256
     dropout: 0.05
     target_modules: ['q_proj','k_proj','v_proj','o_proj','gate_proj','down_proj','up_proj','lm_head'] # no "embed_tokens"
     bias: "none"

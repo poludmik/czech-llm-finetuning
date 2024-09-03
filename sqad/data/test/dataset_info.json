@@ -1,0 +1,117 @@
+{
+  "builder_name": "json",
+  "citation": "",
+  "config_name": "default",
+  "dataset_name": "cs_squad-3.0",
+  "dataset_size": 130993485,
+  "description": "",
+  "download_checksums": {
+    "hf://datasets/fewshot-goes-multilingual/cs_squad-3.0@e2a26bd1bc6d1ff15a33ab9d2ed118054151a784/train.json": {
+      "num_bytes": 148004854,
+      "checksum": null
+    },
+    "hf://datasets/fewshot-goes-multilingual/cs_squad-3.0@e2a26bd1bc6d1ff15a33ab9d2ed118054151a784/validation.json": {
+      "num_bytes": 13584698,
+      "checksum": null
+    },
+    "hf://datasets/fewshot-goes-multilingual/cs_squad-3.0@e2a26bd1bc6d1ff15a33ab9d2ed118054151a784/test.json": {
+      "num_bytes": 19087244,
+      "checksum": null
+    }
+  },
+  "download_size": 180676796,
+  "features": {
+    "item_id": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "context": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "question": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "url": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "answers": {
+      "feature": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "_type": "Sequence"
+    },
+    "evidence_start": {
+      "dtype": "int64",
+      "_type": "Value"
+    },
+    "evidence_end": {
+      "dtype": "int64",
+      "_type": "Value"
+    },
+    "evidence_text": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "occurrences": [
+      {
+        "start": {
+          "dtype": "int64",
+          "_type": "Value"
+        },
+        "end": {
+          "dtype": "int64",
+          "_type": "Value"
+        },
+        "text": {
+          "dtype": "string",
+          "_type": "Value"
+        }
+      }
+    ],
+    "original_article": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "question_type": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "answer_type": {
+      "dtype": "string",
+      "_type": "Value"
+    }
+  },
+  "homepage": "",
+  "license": "",
+  "size_in_bytes": 311670281,
+  "splits": {
+    "train": {
+      "name": "train",
+      "num_bytes": 107282220,
+      "num_examples": 6250,
+      "dataset_name": "cs_squad-3.0"
+    },
+    "validation": {
+      "name": "validation",
+      "num_bytes": 9869428,
+      "num_examples": 570,
+      "dataset_name": "cs_squad-3.0"
+    },
+    "test": {
+      "name": "test",
+      "num_bytes": 13841837,
+      "num_examples": 843,
+      "dataset_name": "cs_squad-3.0"
+    }
+  },
+  "version": {
+    "version_str": "0.0.0",
+    "major": 0,
+    "minor": 0,
+    "patch": 0
+  }
+}

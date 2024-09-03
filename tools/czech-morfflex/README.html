@@ -1,0 +1,259 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<meta name="generator" content="http://txt2tags.org">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Czech MorfFlex2+PDT-C Models</title>
+</head>
+<body>
+
+<div class="header" id="header">
+<h1>Czech MorfFlex2+PDT-C Models</h1>
+</div>
+
+<div class="toc">
+
+  <ol>
+  <li><a href="#czech-morfflex2-pdtc">Czech MorfFlex2+PDT-C Models</a>
+    <ul>
+    <li><a href="#czech-morfflex2-pdtc_download">1.1. Download</a>
+    </li>
+    <li><a href="#czech-morfflex2-pdtc_acknowledgements">1.2. Acknowledgements</a>
+      <ul>
+      <li><a href="#czech-morfflex2-pdtc_publications">1.2.1. Publications</a>
+      </li>
+      </ul>
+    </li>
+    <li><a href="#czech_morfflex2_system">1.3. MorfFlex CZ 2.0 Morphological System</a>
+    </li>
+    <li><a href="#czech-morfflex2-pdtc_split">1.4. PDT-C 1.0 Train/Dev/Test Split</a>
+    </li>
+    <li><a href="#czech-morfflex2-pdtc_variants">1.5. Model Variants</a>
+    </li>
+    <li><a href="#czech-morfflex2-pdtc_performance">1.6. Model Performance</a>
+    </li>
+    </ul>
+  </li>
+  </ol>
+
+</div>
+<div class="body" ID="body">
+<p>
+To use this model, you need MorphoDiTa: Morphological Dictionary and Tagger, an
+open-source tool for morphological analysis of natural language texts. Please visit the MorphoDiTa
+website <a href="http://ufal.mff.cuni.cz/morphodita">http://ufal.mff.cuni.cz/morphodita</a> for more information.
+</p>
+
+<a id="czech-morfflex2-pdtc" name="czech-morfflex2-pdtc"></a>
+<h1>1. Czech MorfFlex2+PDT-C Models</h1>
+
+<p>
+Czech models are distributed under the
+<a href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA</a> licence.
+The Czech morphology uses the
+<a href="http://hdl.handle.net/11234/1-3186">MorfFlex CZ 2.0</a>
+Czech morphological dictionary and the Czech tagger is trained on
+<a href="http://hdl.handle.net/11234/1-3185">PDT-C 1.0</a>. The morpholodical derivator
+is uses the <a href="http://hdl.handle.net/11234/1-3765">DeriNet 2.1</a>.
+Czech models work in MorphoDiTa version 1.9 or later.
+</p>
+<p>
+Apart from MorfFlex CZ dictionary, a prefix guesser and statistical guesser
+are implemented and can be optionally used when performing morphological analysis.
+</p>
+
+<a id="czech-morfflex2-pdtc_download" name="czech-morfflex2-pdtc_download"></a>
+<h2>1.1. Download</h2>
+
+<p>
+The latest version 220710 of the Czech MorfFlex+PDT models can be downloaded
+from <a href="http://hdl.handle.net/11234/1-4794">LINDAT/CLARIN repository</a>.
+</p>
+
+<a id="czech-morfflex2-pdtc_acknowledgements" name="czech-morfflex2-pdtc_acknowledgements"></a>
+<h2>1.2. Acknowledgements</h2>
+
+<p>
+This work has been has been supported by the LINDAT/CLARIAH-CZ project funded
+by Ministry of Education, Youth and Sports of the Czech Republic (project
+<i>LM2018101</i>).
+</p>
+
+<a id="czech-morfflex2-pdtc_publications" name="czech-morfflex2-pdtc_publications"></a>
+<h3>1.2.1. Publications</h3>
+
+<ul>
+<li>(Straková et al., 2014) Straková Jana, Straka Milan and Hajič Jan. <i><a href="https://www.aclweb.org/anthology/P/P14/P14-5003.pdf">Open-Source Tools for Morphology, Lemmatization, POS Tagging and Named Entity Recognition</a>.</i> In Proceedings of 52nd Annual Meeting of the Association for Computational Linguistics: System Demonstrations, pages 13-18, Baltimore, Maryland, June 2014. Association for Computational Linguistics.
+<p></p>
+</li>
+<li>(Jonáš Vidra et al., 2019) Jonáš Vidra, Zdeněk Žabokrtský, Magda Ševčíková, Lukáš Kyjánek. <i>Towards an All-in-One Word-Formation Resource.</i> In Proceedings of the Second Workshop on Resources and Tools for Derivational Morphology (DeriMo 2019). Prague, 2019, pp. 81-89.
+<p></p>
+</li>
+<li>(Jan Hajič et al., 2020) Jan Hajič, Eduard Bejček, Jaroslava Hlavacova, Marie Mikulová, Milan Straka, Jan Štěpánek, and Barbora Štěpánková. <i><a href="https://aclanthology.org/2020.lrec-1.641.pdf">Prague Dependency Treebank - Consolidated 1.0</a>.</i> In Proceedings of the 12th Language Resources and Evaluation Conference, pages 5208–5218, Marseille, France. European Language Resources Association.
+<p></p>
+</li>
+<li>(Marie Mikulová et al., 2022) Mikulová Marie, Hajič Jan, Hana Jiří, Hanová Hana, Hlaváčová Jaroslava, Jeřábek Emil, Štěpánková Barbora, Vidová Hladká Barbora, Zeman Daniel. <i><a href="https://ufal.mff.cuni.cz/techrep/tr64.pdf">Manual for Morphological Annotation, Revision for the Prague Dependency Treebank - Consolidated 2020 release</a>.</i> Technical report no. TR-2020-64, Institute of Formal and Applied Linguistics, Charles University, Prague, Czechia, 2020.
+</li>
+</ul>
+
+<a id="czech_morfflex2_system" name="czech_morfflex2_system"></a>
+<h2>1.3. MorfFlex CZ 2.0 Morphological System</h2>
+
+<p>
+The MorfFlex CZ 2.0 uses a so-called <i>PDT-C tag set</i>, which is an evolution
+of the original <i>PDT tag set</i> devised by Jan Hajič
+(<a href="http://books.google.cz/books?id=sB63AAAACAAJ">Hajič 2004</a>).
+The tags are positional with 15 positions corresponding to part of speech,
+detailed part of speech, gender, number, case, etc. (e.g. <code>NNFS1-----A----</code>).
+Different meanings of same lemmas are distinguished and additional comments can
+be provided for every lemma meaning. The lemma itself without the comments and
+meaning specification is called a <i>raw lemma</i>. The following examples
+illustrate this:
+</p>
+
+<ul>
+<li><code>Japonsko_;G</code> (raw lemma: <code>Japonsko</code>)
+</li>
+<li><code>se_^(zvr._zájmeno/částice)</code> (raw lemma: <code>se</code>)
+</li>
+<li><code>tvořit_:T</code> (raw lemma: <code>tvořit</code>)
+</li>
+</ul>
+
+<p>
+The complete reference can be found in the
+<a href="https://ufal.mff.cuni.cz/techrep/tr64.pdf">Manual for Morphological Annotation, Revision for the Prague Dependency Treebank - Consolidated 2020 release</a>.
+</p>
+
+<a id="czech-morfflex2-pdtc_split" name="czech-morfflex2-pdtc_split"></a>
+<h2>1.4. PDT-C 1.0 Train/Dev/Test Split</h2>
+
+<p>
+The PDT-C corpus consists of four datasets, but some of them do not have
+an official train/dev/test split. We therefore used the following split:
+</p>
+
+<ul>
+<li>PDT dataset is already split into train, dev (<code>dtest</code>), and test (<code>etest</code>).
+</li>
+<li>PCEDT dataset is a translated version of the Wall Street Journal, so we used
+  the usual split into train (sections 0-18), dev (sections 19-21), and test
+  (sections 22-24).
+</li>
+<li>PDTSC and FAUST datasets have no split, so we split it into dev (documents
+  with identifiers ending with 6), test (documents with identifiers ending with 7),
+  and train (all the remaining documents).
+</li>
+</ul>
+
+<a id="czech-morfflex2-pdtc_variants" name="czech-morfflex2-pdtc_variants"></a>
+<h2>1.5. Model Variants</h2>
+
+<p>
+Apart from the primary model, which predicts all the 15 tag positions and processed
+texts with diacritics, we also provide several variants:
+</p>
+
+<ul>
+<li><code>pos_only</code>: Instead of all 15 tag positions, the model predicts only the first 2,
+  which contain the coarse and detailed POS, plus the full lemma, while being
+  circa 15 times faster than the primary model.
+<p></p>
+</li>
+<li><code>no_dia</code>, <code>no_dia-pos_only</code>: The forms (during morphological analysis,
+  generation, and tagging) have the diacritical marks stripped; however, the
+  lemmas do include them. Useful for processing texts without diacritics.
+</li>
+</ul>
+
+<a id="czech-morfflex2-pdtc_performance" name="czech-morfflex2-pdtc_performance"></a>
+<h2>1.6. Model Performance</h2>
+
+<table border="1">
+<tr>
+<th></th>
+<th colspan="5">Tags</th>
+<th colspan="5">Lemmas</th>
+<th colspan="2">Performance</th>
+</tr>
+<tr>
+<th>Model</th>
+<th>PDT</th>
+<th>PCEDT</th>
+<th>PDTSC</th>
+<th>Faust</th>
+<th>MacroAvg</th>
+<th>PDT</th>
+<th>PCEDT</th>
+<th>PDTSC</th>
+<th>Faust</th>
+<th>MacroAvg</th>
+<th>Speed</th>
+<th>Size</th>
+</tr>
+<tr>
+<td><code>czech-morfflex2.0-pdtc1.0-220710</code></td>
+<td>96.29</td>
+<td>97.00</td>
+<td>96.90</td>
+<td>94.87</td>
+<td>96.27</td>
+<td>98.69</td>
+<td>98.85</td>
+<td>98.18</td>
+<td>97.53</td>
+<td>98.31</td>
+<td align="right">19k toks/s</td>
+<td align="right">24.4MB</td>
+</tr>
+<tr>
+<td><code>czech-morfflex2.0-pdtc1.0-220710-pos_only</code></td>
+<td>98.99</td>
+<td>99.12</td>
+<td>98.45</td>
+<td>97.85</td>
+<td>98.60</td>
+<td>98.50</td>
+<td>98.63</td>
+<td>98.09</td>
+<td>97.05</td>
+<td>98.07</td>
+<td align="right">253k toks/s</td>
+<td align="right">9.5MB</td>
+</tr>
+<tr>
+<td><code>czech-morfflex2.0-pdtc1.0-220710-no_dia</code></td>
+<td>95.57</td>
+<td>96.13</td>
+<td>96.40</td>
+<td>93.46</td>
+<td>95.39</td>
+<td>97.88</td>
+<td>98.20</td>
+<td>97.67</td>
+<td>96.57</td>
+<td>97.58</td>
+<td align="right">11k toks/s</td>
+<td align="right">30.4MB</td>
+</tr>
+<tr>
+<td><code>czech-morfflex2.0-pdtc1.0-220710-no_dia-pos_only</code></td>
+<td>98.55</td>
+<td>98.73</td>
+<td>98.07</td>
+<td>97.31</td>
+<td>98.17</td>
+<td>97.60</td>
+<td>97.85</td>
+<td>97.52</td>
+<td>95.98</td>
+<td>97.24</td>
+<td align="right">177k toks/s</td>
+<td align="right">14.5MB</td>
+</tr>
+</table>
+
+</div>
+<!-- html code generated by txt2tags 2.6 (http://txt2tags.org) -->
+<!-- cmdline: txt2tags -t html -\-toc -\-enum-title -o morphodita_model_czech-morfflex2-pdtc_readme.html -C t2t_docsys/t2t_docsys_manual.conf -C t2t_docsys/t2t_docsys_striplevel.conf morphodita_model_czech-morfflex2-pdtc_readme.t2t -->
+</body></html>

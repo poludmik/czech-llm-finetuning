@@ -1,3 +1,4 @@
+import copy
 import json
 import time
 from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer
@@ -22,9 +23,13 @@ import wandb
 from peft import LoraConfig, get_peft_model
 from datasets import load_dataset, load_from_disk
 from tqdm import tqdm
+from tools.lemmatization import MorphoDiTa
+from tools.word_roots import DeriNet
+import evaluate
+
 
 from utils import *
-from agree.prompts import *
+from sqad.prompts import *
 
 
 class CustomChatGemma2(BaseChatModel):
@@ -114,90 +119,162 @@ class WandbPredictionProgressCallback(WandbCallback):
         super().on_evaluate(args, state, control, **kwargs)
         # control the frequency of logging by logging the predictions
         # every `freq` epochs
-        if state.epoch % self.freq == 0 or True:
-            # generate predictions
-            # predictions = self.trainer.model.generate()
-            # decode predictions and labels
-            # predictions = decode_predictions(self.tokenizer, predictions)
-            # add predictions to a wandb.Table
+        # testing_dataset = json.load(open("czech-bench/benchmarks/sqad/data/test", "r"))
+        testing_dataset = load_from_disk("czech-bench/benchmarks/sqad/data/test")
+        testing_dataset = testing_dataset.shuffle(seed=228).select(range(100))
 
-            # messages = [
-            #     {"role": "user", "content": "Ahoj, jak se máš?"},
-            # ]
+        tokenizer =  AutoTokenizer.from_pretrained("google/gemma-2-2b-it")
+        llm = CustomChatGemma2(None, tokenizer, do_sample=False, max_new_tokens=10)
+        llm.pipeline.model = self.trainer.model
 
-            tokenizer =  AutoTokenizer.from_pretrained("google/gemma-2-2b-it")
-            llm = CustomChatGemma2(None, tokenizer, do_sample=True)
-            llm.pipeline.model = self.trainer.model
+        lemmatizer = MorphoDiTa()
+        if not lemmatizer.lemmatizer:
+            lemmatizer = False
+        root_lexicon = None
+        if not lemmatizer:
+            print("Failed to load lemmatizer model, morphological analysis will be skipped")
+        else:
+            try:
+                root_lexicon = DeriNet()
+            except:
+                print("Failed to load root lexicon, root extraction will be skipped")
 
-            sys_message = SystemMessage(content="Jsi assistent.", type="system")
-            message = BaseMessage(content="Ahoj, jak se máš?", type="text")
+        prompt = PROMPT_SELECTOR.get_prompt(llm)
+        str_parser = StrOutputParser()
 
-            print(llm.invoke([sys_message, message]).content)
+        print("Evaluating SQAD")
 
-            testing_dataset = json.load(open("czech-bench/benchmarks/agree/data/test.json", "r"))
+        prompt = PROMPT_SELECTOR.get_prompt(llm)
+        str_parser = StrOutputParser()
 
-            prompt = PROMPT_SELECTOR.get_prompt(llm)
-            str_parser = StrOutputParser()
+        def morpho_analyze(answer):
+            tokens = [tok.rstrip(",.?!") for tok in answer.lower().rstrip('\r\n').split()]
+            lemmas = ""
+            roots = ""
+            for token in tokens:
+                lemma = lemmatizer.lemmatize(token)
+                lemmas += lemma + " "      
+                if root_lexicon is not None:
+                    roots += root_lexicon.get_root(lemma) + " "
+            return lemmas, roots
 
-            correct = 0
-            parse_fails = 0
-            count = 0
-            cum_time = 0.
+        references = []
+        predictions = []
+        ref_lemmas = []
+        pred_lemmas = []
+        ref_roots = []
+        pred_roots = []
+        count = 0
+        cum_time = 0.
 
-            print(f"{BLUE}Evaluating AGREE\n{RESET}")
+        for i, example in enumerate(testing_dataset):
+            print(f"\rExample {i+1} / {len(testing_dataset)}", end="")
 
-            for i, example in tqdm(enumerate(testing_dataset)):
-                # if i+1 > 10:
-                #     break
-                # print(f"\rExample {i+1} / {len(testing_dataset)}", end="")
-                sentence = example["sentence"]
-                choices = example["choices"]
-                gt = example["answer_idx"] + 1
+            if i > 99:
+                break
 
-                try:
-                    start_time = time.time()
-                    if is_chat_model(llm):
-                        result = llm.invoke(prompt.format_prompt(sentence=sentence, choices=choices).to_messages())
-                    else:
-                        result = llm.invoke(prompt.format_prompt(sentence=sentence, choices=choices).text)    
-                    result = str_parser.invoke(result)
-                    end_time = time.time()
-                    res_split = result.split()
-                    if res_split:
-                        res = result.split()[0].strip().strip(")")
-                    else:
-                        res = result
-                except Exception as e:
-                    print(f"\nExample skipped due to an LLM Error: {e}")
-                    continue
-                
-                try:
-                    prediction = int(res)
-                except:
-                    parse_fails += 1
-                    continue
-                if prediction == gt:
-                    correct += 1
-                count += 1
-                cum_time += end_time - start_time
+            context = example["context"]
+            question = example["question"]
 
-            print("\nComputing metrics")
+            try:
+                start_time = time.time()
+                if is_chat_model(llm):
+                    result = llm.invoke(prompt.format_prompt(context=context, question=question).to_messages())
+                else:
+                    result = llm.invoke(prompt.format_prompt(context=context, question=question).text)
+                result = str_parser.invoke(result)
+                end_time = time.time()
+            except Exception as e:
+                print(f"\nExample skipped due to an LLM Error: {e}")
+                continue
+            
+            id = example["item_id"]
+            ref = {
+                "answers": {"text": example["answers"], "answer_start": [d["start"] for d in example["occurrences"]]},
+                "id": id
+            }
+            ans = {
+                "prediction_text": result,
+                "id": id
+            }
+            references.append(ref)
+            predictions.append(ans)
 
-            accuracy = correct/count*100
-            total_valid_examples = count
-            print(f"Accuracy: {accuracy:.2f}")
-            print(f"Unpareable answersz: {parse_fails}")
-            print("Total valid examples used: ", total_valid_examples)
+            if lemmatizer:
+                ans_lemmas = []
+                ans_roots = []
+                for ans_text in example["answers"]:
+                    lems, roots = morpho_analyze(ans_text)
+                    ans_lemmas.append(lems)
+                    ans_roots.append(roots)
 
-            self._wandb.log({"agree_accuracy": accuracy, "parse_fails": parse_fails})
+                ref_lem_dict = copy.deepcopy(ref)
+                ref_lem_dict["answers"]["text"] = ans_lemmas
+                ref_root_dict = copy.deepcopy(ref)
+                ref_root_dict["answers"]["text"] = ans_roots
 
+                lems, roots = morpho_analyze(result)
+                pred_lem_dict = copy.deepcopy(ans)
+                pred_lem_dict["prediction_text"] = lems
+                pred_root_dict = copy.deepcopy(ans)
+                pred_root_dict["prediction_text"] = roots
 
+                ref_lemmas.append(ref_lem_dict)
+                pred_lemmas.append(pred_lem_dict)
+                if root_lexicon is not None:
+                    ref_roots.append(ref_root_dict)
+                    pred_roots.append(pred_root_dict)
+            count += 1
+            cum_time += end_time - start_time
+            
+        print("\nComputing metrics")
 
-def decode_predictions(tokenizer, predictions):
-    labels = tokenizer.batch_decode(predictions.label_ids)
-    logits = predictions.predictions.argmax(axis=-1)
-    prediction_text = tokenizer.batch_decode(logits)
-    return {"labels": labels, "predictions": prediction_text}
+        exact_match = 0
+        bow_f1 = 0
+        lemmas_exact_match = 0
+        lemmas_bow_f1 = 0
+        roots_exact_match = 0
+        roots_bow_f1 = 0
+        average_inference_time = 0
+        total_valid_examples = 0
+
+        lines = "\nResults:\n"
+        if count > 0:
+            metric = evaluate.load("squad")
+            res = metric.compute(predictions=predictions, references=references)
+            lines += f"Exact Match: {res['exact_match']:.2f}\n"
+            lines += f"BoW F1: {res['f1']:.2f}\n"
+            exact_match = res['exact_match']
+            bow_f1 = res['f1']
+
+            if lemmatizer:
+                res_lemma = metric.compute(predictions=pred_lemmas, references=ref_lemmas)
+                lines += f"Lemmas Exact Match: {res_lemma['exact_match']:.2f}\n"
+                lines += f"Lemmas BoW F1: {res_lemma['f1']:.2f}\n"
+                lemmas_exact_match = res_lemma['exact_match']
+                lemmas_bow_f1 = res_lemma['f1']
+
+                if root_lexicon is not None:
+                    res_root = metric.compute(predictions=pred_roots, references=ref_roots)
+                    lines += f"Roots Exact Match: {res_root['exact_match']:.2f}\n"
+                    lines += f"Roots BoW F1: {res_root['f1']:.2f}\n"
+                    roots_exact_match = res_root['exact_match']
+                    roots_bow_f1 = res_root['f1']
+            
+            lines += f"Average inference time: {cum_time/count:.2f}s\n"
+            average_inference_time = cum_time/count
+
+        lines += f"Total valid examples used: {count}\n"
+        total_valid_examples = count
+
+        # save metrics to SQAD/
+        self._wandb.log({"SQAD/exact_match": exact_match, "SQAD/bow_f1": bow_f1, 
+                         "SQAD/lemmas_exact_match": lemmas_exact_match, "SQAD/lemmas_bow_f1": lemmas_bow_f1,
+                         "SQAD/roots_exact_match": roots_exact_match, "SQAD/roots_bow_f1": roots_bow_f1,
+                         "SQAD/average_inference_time": average_inference_time, "SQAD/total_valid_examples": total_valid_examples})
+        
+        # self._wandb.log({"agree_accuracy": accuracy, "parse_fails": parse_fails})
+
 
 
 def main(config_path: str = "config.yaml"):
@@ -214,7 +291,8 @@ def main(config_path: str = "config.yaml"):
     datasets = load_from_disk(cfg.dataset)
 
     def tokenize_function(examples):
-        texts = list(map(lambda x,y: x + y, examples["input"], examples["output"]))
+        # texts = list(map(lambda x,y: x + y, examples["input"], examples["output"]))
+        texts = list(map(lambda x: x, examples["text"]))
         # toks = tokenizer(texts, truncation=True, max_length=cfg.hyperparameters.trainer.max_seq_length, padding='max_length')
         # print(">>>" + texts[0] + "<<<")
         toks = tokenizer(texts)
@@ -310,7 +388,7 @@ def main(config_path: str = "config.yaml"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default="czech-llm-finetuning/config/instruction_gemma2_config.yaml", help="Path to the config file.")
+    parser.add_argument("--config", type=str, default="czech-llm-finetuning/config/normal_gemma2_config.yaml", help="Path to the config file.")
     main(parser.parse_args().config)
 
 
