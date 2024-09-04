@@ -406,7 +406,7 @@ sweep_configuration = {
     "metric": {"goal": "minimize", "name": "sqad_em"},
     "parameters": {
         "r": {"values": [256, 512, 600]},
-        "alpha": {"values": [512]},
+        "alpha": {"values": [1024]},
         # "lr": {"values": [0.00005]},
     },
 }
