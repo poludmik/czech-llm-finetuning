@@ -284,7 +284,7 @@ class WandbPredictionProgressCallback(WandbCallback):
 def objective(config):
 
     # run training with config
-    cfg = DotDict(load_config("czech-llm-finetuning/config/normal_gemma2_config.yaml"))
+    cfg = DotDict(load_config("czech-llm-finetuning/config/arc_no_expl.yaml"))
 
     seed = cfg.hyperparameters.seed
     random.seed(seed)
@@ -314,6 +314,11 @@ def objective(config):
 
     train_dataset = split_dataset['train']
     validation_dataset = split_dataset['test']
+
+    print("Validation dataset size:", len(validation_dataset))
+    for i in range(40):
+        print(validation_dataset[i]["text"])
+        print()
 
     lora_config = LoraConfig(
         r=config.r,
@@ -379,8 +384,7 @@ def objective(config):
     )
 
     # Add the callback to the trainer
-    trainer.add_callback(progress_callback)
-
+    # trainer.add_callback(progress_callback)
 
     trainer.train()
     model.save_pretrained(output_dir_name)
@@ -405,8 +409,8 @@ sweep_configuration = {
     "method": "grid",
     "metric": {"goal": "minimize", "name": "sqad_em"},
     "parameters": {
-        "r": {"values": [256, 512, 600]},
-        "alpha": {"values": [1024]},
+        "r": {"values": [256, 512]},
+        "alpha": {"values": [256, 512]},
         # "lr": {"values": [0.00005]},
     },
 }

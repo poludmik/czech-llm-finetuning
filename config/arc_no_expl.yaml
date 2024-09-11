@@ -4,11 +4,11 @@ wandb:
 # dataset: "dataset-playground/small_datasets/requests_translated_0_to_10k_google_gemma-2-2b-it/
 # dataset: "dataset-playground/small_datasets/arc_challenge/arc_challenge_gemma/"
 # dataset: "dataset-playground/small_datasets/sqad_formatted/"
-dataset: "dataset-playground/small_datasets/combined_arc_with_expl_sqad/"
+dataset: "dataset-playground/small_datasets/arc_no_expl_gemma/"
 hyperparameters:
   seed: 228
   split_ratio: 0.04 # % of the data is used for validation
-  output_dir: "training/lora/cp/arc_expl_sqad_gemma"
+  output_dir: "training/lora/cp/arc_no_expl/"
   overwrite_output_dir: True
   per_device_train_batch_size: 1
   per_device_eval_batch_size: 1
@@ -20,7 +20,7 @@ hyperparameters:
   logging_steps: 50
   # group_by_length: True
   ddp_find_unused_parameters: False
-  run_name: "ARCexpl/SQAD Gemma"
+  run_name: "ARC no expl"
   learning_rate: 0.000025
   max_grad_norm: 5.0
   max_steps: 1000

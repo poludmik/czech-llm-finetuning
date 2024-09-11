@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-#SBATCH --job-name sqad_sweep
+#SBATCH --job-name arc_no_expl_sweep
 #SBATCH --account OPEN-29-45
 #SBATCH --partition qgpu
 #SBATCH --gpus 1
