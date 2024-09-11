@@ -1,49 +1,113 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from pytorch_lightning.demos import Transformer, WikiText2
-from torch.utils.data import DataLoader
-from pytorch_lightning.callbacks import RichProgressBar
-from pytorch_lightning.callbacks import DeviceStatsMonitor
+from collections import defaultdict
+from datetime import datetime
+from typing import Optional
 
+import datasets
 import pytorch_lightning as pl
+import torch
+from torch.utils.data import DataLoader
+from transformers import (
+    AdamW,
+    AutoConfig,
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    get_linear_schedule_with_warmup,
+)
 
-# intialize model, optimizer and defines training step
-class LanguageModel(pl.LightningModule):
-    def __init__(self, vocab_size):
+class GLUETransformer(pl.LightningModule):
+    def __init__(
+        self,
+        num_labels: int,
+        task_name: str,
+        model_name_or_path: str = "google/gemma-2-2b",
+        learning_rate: float = 2e-5,
+        adam_epsilon: float = 1e-8,
+        warmup_steps: int = 0,
+        weight_decay: float = 0.0,
+        train_batch_size: int = 32,
+        eval_batch_size: int = 32,
+        eval_splits: Optional[list] = None,
+        **kwargs,
+    ):
         super().__init__()
-        self.model = Transformer(
-            vocab_size=vocab_size,
-            nlayers=86, # 86 is 2.6B, 50 is 1.5B
-            nhid=4096,
-            ninp=1024,
-            nhead=64,
-        )
 
-    def training_step(self, batch):
-        input, target = batch
-        print(input.shape, target.shape)
-        output = self.model(input, target)
-        loss = F.nll_loss(output, target.view(-1))
-        self.log("train_loss", loss, prog_bar=True)
+        self.save_hyperparameters()
+
+        self.config = AutoConfig.from_pretrained(model_name_or_path, num_labels=num_labels)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name_or_path, config=self.config)
+        self.outputs = defaultdict(list)
+
+    def forward(self, **inputs):
+        return self.model(**inputs)
+
+    def training_step(self, batch, batch_idx):
+        outputs = self(**batch)
+        loss = outputs[0]
         return loss
 
+    def validation_step(self, batch, batch_idx, dataloader_idx=0):
+        outputs = self(**batch)
+        val_loss, logits = outputs[:2]
+
+        if self.hparams.num_labels > 1:
+            preds = torch.argmax(logits, axis=1)
+        elif self.hparams.num_labels == 1:
+            preds = logits.squeeze()
+
+        labels = batch["labels"]
+
+        self.outputs[dataloader_idx].append({"loss": val_loss, "preds": preds, "labels": labels})
+
+    def on_validation_epoch_end(self):
+        if self.hparams.task_name == "mnli":
+            for i, outputs in self.outputs.items():
+                # matched or mismatched
+                split = self.hparams.eval_splits[i].split("_")[-1]
+                preds = torch.cat([x["preds"] for x in outputs]).detach().cpu().numpy()
+                labels = torch.cat([x["labels"] for x in outputs]).detach().cpu().numpy()
+                loss = torch.stack([x["loss"] for x in outputs]).mean()
+                self.log(f"val_loss_{split}", loss, prog_bar=True)
+                split_metrics = {
+                    f"{k}_{split}": v for k, v in self.metric.compute(predictions=preds, references=labels).items()
+                }
+                self.log_dict(split_metrics, prog_bar=True)
+            return loss
+
+        flat_outputs = []
+        for lst in self.outputs.values():
+            flat_outputs.extend(lst)
+
+        preds = torch.cat([x["preds"] for x in flat_outputs]).detach().cpu().numpy()
+        labels = torch.cat([x["labels"] for x in flat_outputs]).detach().cpu().numpy()
+        loss = torch.stack([x["loss"] for x in flat_outputs]).mean()
+        self.log("val_loss", loss, prog_bar=True)
+        self.log_dict(self.metric.compute(predictions=preds, references=labels), prog_bar=True)
+        self.outputs.clear()
+
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.1)
+        """Prepare optimizer and schedule (linear warmup and decay)."""
+        model = self.model
+        no_decay = ["bias", "LayerNorm.weight"]
+        optimizer_grouped_parameters = [
+            {
+                "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
+                "weight_decay": self.hparams.weight_decay,
+            },
+            {
+                "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
+                "weight_decay": 0.0,
+            },
+        ]
+        optimizer = AdamW(optimizer_grouped_parameters, lr=self.hparams.learning_rate, eps=self.hparams.adam_epsilon)
 
-pl.seed_everything(42)
+        scheduler = get_linear_schedule_with_warmup(
+            optimizer,
+            num_warmup_steps=self.hparams.warmup_steps,
+            num_training_steps=self.trainer.estimated_stepping_batches,
+        )
+        scheduler = {"scheduler": scheduler, "interval": "step", "frequency": 1}
+        return [optimizer], [scheduler]
 
-# Data
-dataset = WikiText2()
-print("Dataset:", dataset)
-
-train_dataloader = DataLoader(dataset, batch_size=1)
-
-
-# Model
-model = LanguageModel(vocab_size=dataset.vocab_size)
-
-# Trainer
-trainer = pl.Trainer(accelerator="cuda", devices=6, strategy="fsdp")
-trainer.fit(model, train_dataloader)
-trainer.print(f"Memory used: {torch.cuda.max_memory_allocated() / 1e9:.02f} GB")
+if __name__ == "__main__":
+    model = GLUETransformer(num_labels=2, task_name="cola")
+    # print(model.forward(input_ids=torch.randint(0, 50256, (1, 128))))

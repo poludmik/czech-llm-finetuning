@@ -1,3 +1,5 @@
 __pycache__/
 agree/
 lightning_tests/checkpoints/
+lightning_tests/data/
+lightning_tests/lightning_logs/
